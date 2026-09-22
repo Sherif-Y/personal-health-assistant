@@ -22,8 +22,27 @@ def _category_text(resource):
     return _coding_text(first) if isinstance(first, dict) else None
 
 
-def observation_to_lab_result(obs):
-    """Normalize a FHIR Observation (US Core Laboratory Result) into LabResult fields."""
+def diagnostic_report_panel_name(report):
+    """The human-readable panel name (e.g. 'Comprehensive Metabolic Panel')."""
+    return _coding_text(report.get("code"))
+
+
+def extract_result_observation_ids(report):
+    """FHIR ids of the Observations grouped under this DiagnosticReport's `result` list."""
+    ids = []
+    for ref in report.get("result") or []:
+        reference = ref.get("reference", "")
+        if reference:
+            ids.append(reference.split("/")[-1])
+    return ids
+
+
+def observation_to_lab_result(obs, panel_name=None):
+    """Normalize a FHIR Observation (US Core Laboratory Result) into LabResult fields.
+
+    `panel_name` (the parent DiagnosticReport's name, e.g. 'CBC With Differential')
+    is preferred over the generic FHIR category ('laboratory') for grouping in the UI.
+    """
     ref_low = ref_high = ref_text = None
     ranges = obs.get("referenceRange") or []
     if ranges:
@@ -46,7 +65,7 @@ def observation_to_lab_result(obs):
         "fhir_id": obs["id"],
         "loinc_code": _loinc_code(obs.get("code")),
         "display_name": _coding_text(obs.get("code")) or "Unknown test",
-        "category": _category_text(obs),
+        "category": panel_name or _category_text(obs) or "Other Labs",
         "value": value,
         "value_text": value_text,
         "unit": unit,

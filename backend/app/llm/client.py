@@ -18,7 +18,7 @@ def ask(session, user_message):
     for _ in range(_MAX_TOOL_ITERATIONS):
         response = _client.messages.create(
             model=_MODEL,
-            max_tokens=1024,
+            max_tokens=3000,
             system=SYSTEM_PROMPT,
             tools=TOOL_SCHEMAS,
             messages=messages,

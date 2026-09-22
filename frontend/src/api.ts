@@ -24,6 +24,10 @@ export interface LabResultRow {
   reference_range_text: string | null;
   collected_at: string | null;
   out_of_range: boolean | null;
+  previous_value: number | null;
+  previous_collected_at: string | null;
+  pct_change: number | null;
+  trend_direction: "up" | "down" | "flat" | null;
 }
 
 export interface LabsResponse {
@@ -33,6 +37,7 @@ export interface LabsResponse {
 export interface TrendMetric {
   loinc_code: string | null;
   display_name: string;
+  category: string;
   data_points: number;
 }
 

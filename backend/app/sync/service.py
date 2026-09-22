@@ -6,7 +6,13 @@ from app.auth.session import get_patient_id
 from app.db.models import LabResult, Report, SyncMetadata
 from app.sync.binary import fetch_narrative_text
 from app.sync.fhir_client import fhir_search_all
-from app.sync.normalize import diagnostic_report_to_report, document_reference_to_report, observation_to_lab_result
+from app.sync.normalize import (
+    diagnostic_report_panel_name,
+    diagnostic_report_to_report,
+    document_reference_to_report,
+    extract_result_observation_ids,
+    observation_to_lab_result,
+)
 
 
 def _parse_fhir_datetime(value):
@@ -53,13 +59,22 @@ def run_sync(session: Session):
     patient_id = get_patient_id()
     counts = {}
 
+    # Fetch reports first so lab Observations can be grouped by their real panel name
+    # (e.g. "Comprehensive Metabolic Panel") instead of the generic "laboratory" category.
+    reports = fhir_search_all("DiagnosticReport", {"patient": patient_id})
+    panel_name_by_observation_id = {}
+    for report in reports:
+        panel_name = diagnostic_report_panel_name(report)
+        for obs_id in extract_result_observation_ids(report):
+            panel_name_by_observation_id[obs_id] = panel_name
+
     observations = fhir_search_all("Observation", {"patient": patient_id, "category": "laboratory"})
     for obs in observations:
-        _upsert(session, LabResult, obs["id"], observation_to_lab_result(obs))
+        panel_name = panel_name_by_observation_id.get(obs["id"])
+        _upsert(session, LabResult, obs["id"], observation_to_lab_result(obs, panel_name))
     counts["lab_results"] = len(observations)
     _mark_synced(session, "Observation")
 
-    reports = fhir_search_all("DiagnosticReport", {"patient": patient_id})
     for report in reports:
         _upsert(session, Report, report["id"], _fill_narrative(diagnostic_report_to_report(report)))
     counts["diagnostic_reports"] = len(reports)

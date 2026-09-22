@@ -173,6 +173,31 @@ a:hover {
   gap: 10px;
 }
 
+.search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--ink-faint);
+  pointer-events: none;
+  display: flex;
+}
+.input-search {
+  padding: 9px 14px 9px 34px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 13px;
+  font-family: var(--font-body);
+  color: var(--ink);
+}
+.input-search::placeholder {
+  color: var(--ink-faint);
+}
+
 .select-pill,
 .filter-pill {
   display: inline-flex;

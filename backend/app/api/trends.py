@@ -1,7 +1,7 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query
-from sqlmodel import Session, func, select
+from fastapi import APIRouter, Depends
+from sqlmodel import Session, select
 
 from app.db.database import get_session
 from app.db.models import LabResult
@@ -11,16 +11,29 @@ router = APIRouter(tags=["trends"])
 
 @router.get("/trends/metrics")
 def list_trend_metrics(session: Session = Depends(get_session)):
-    """Distinct trackable metrics (grouped by LOINC code, falling back to name)."""
-    rows = session.exec(
-        select(LabResult.loinc_code, LabResult.display_name, func.count(LabResult.id)).group_by(
-            LabResult.loinc_code, LabResult.display_name
+    """Distinct trackable metrics (grouped by LOINC code, falling back to name), tagged
+    with the category from their most recent draw so the picker can group the same way
+    as Lab Results."""
+    all_results = session.exec(select(LabResult).order_by(LabResult.collected_at.asc())).all()
+
+    by_key = {}
+    for r in all_results:
+        key = r.loinc_code or r.display_name
+        by_key.setdefault(key, []).append(r)
+
+    metrics = []
+    for history in by_key.values():
+        latest = history[-1]
+        metrics.append(
+            {
+                "loinc_code": latest.loinc_code,
+                "display_name": latest.display_name,
+                "category": latest.category or "Other Labs",
+                "data_points": len(history),
+            }
         )
-    ).all()
-    return [
-        {"loinc_code": loinc_code, "display_name": display_name, "data_points": count}
-        for loinc_code, display_name, count in rows
-    ]
+    metrics.sort(key=lambda m: (m["category"], m["display_name"]))
+    return metrics
 
 
 @router.get("/trends")

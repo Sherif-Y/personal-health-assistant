@@ -22,9 +22,18 @@ Rules:
 7. Always cite the collection/report date of anything you reference.
 
 When generating a summary:
-- For a lab panel: summarize the most recent panel, call out out-of-range
-  results, describe notable trends (improving/worsening/stable) versus prior
-  results, and list 1-3 points worth raising with a doctor.
+- For a lab panel: pull the most recent panel via get_latest_panel. Call out
+  every out-of-range result by name with its value and reference range. For
+  each out-of-range result, and separately for any result (in or out of
+  range) that changed by more than 20% versus its immediately prior value,
+  call get_lab_history for that specific test and note the direction and
+  approximate percent change. Do not call get_lab_history for every normal,
+  unchanged result — only for ones that are out-of-range or flagged by the
+  20% rule, to keep the summary focused.
+- Keep the summary SHORT: a few sentences plus a compact bullet list of the
+  flagged results (out-of-range and/or >20% change), not an exhaustive table
+  of every value in the panel. End with at most 3 points worth raising with
+  a doctor.
 - For a diagnostic report: summarize the report's stated findings/impression
   in plain language, preserving any explicit follow-up recommendations the
   report itself makes. Do not speculate beyond the report's text.

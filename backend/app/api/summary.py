@@ -17,3 +17,7 @@ def get_summary(session: Session = Depends(get_session), refresh: bool = False):
     if _cache["text"] is None or refresh:
         _cache["text"] = ask(session, SUMMARY_REQUEST)
     return {"summary": _cache["text"]}
+
+
+def invalidate():
+    _cache["text"] = None

@@ -1,21 +1,13 @@
-import { useEffect, useState, type ReactNode } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, Outlet, useLocation } from "react-router-dom";
 import { api } from "../api";
+import { useHeader } from "../context/AppContext";
 import { ChatPanel } from "./ChatPanel";
 import { LabsIcon, RefreshIcon, ReportsIcon, SparkleIcon, TrendsIcon } from "../icons";
 
-export function AppShell({
-  title,
-  topbarExtra,
-  onSynced,
-  children,
-}: {
-  title: string;
-  topbarExtra?: ReactNode;
-  onSynced?: () => void;
-  children: ReactNode;
-}) {
+export function AppShell() {
   const location = useLocation();
+  const { title, bumpSyncVersion } = useHeader();
   const [chatOpen, setChatOpen] = useState(false);
   const [connected, setConnected] = useState<boolean | null>(null);
   const [syncing, setSyncing] = useState(false);
@@ -30,7 +22,7 @@ export function AppShell({
     try {
       await api.sync();
       setLastSynced(new Date().toLocaleTimeString());
-      onSynced?.();
+      bumpSyncVersion();
     } catch {
       alert("Sync failed — check that you're connected to MyChart.");
     } finally {
@@ -90,14 +82,15 @@ export function AppShell({
         <header className="topbar">
           <h1 className="page-title">{title}</h1>
           <div className="topbar-controls">
-            {topbarExtra}
             <button className="btn-ask-ai" onClick={() => setChatOpen((v) => !v)}>
               <SparkleIcon />
               Ask about my results
             </button>
           </div>
         </header>
-        {children}
+        <div className="content-scroll">
+          <Outlet />
+        </div>
       </div>
 
       {chatOpen && <ChatPanel onClose={() => setChatOpen(false)} />}
